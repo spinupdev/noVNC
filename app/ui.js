@@ -177,7 +177,7 @@ const UI = {
         UI.initSetting('port', 0);
         UI.initSetting('encrypt', (window.location.protocol === "https:"));
         UI.initSetting('password');
-        UI.initSetting('autoconnect', false);
+        UI.initSetting('autoconnect', true);
         UI.initSetting('view_clip', false);
         UI.initSetting('resize', 'off');
         UI.initSetting('quality', 6);
