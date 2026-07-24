@@ -63,15 +63,59 @@ html {
 
 .noVNC_spinner {
     position: relative;
-    font-size: 3em;
-    font-family: monospace;
     display: inline-block;
-    width: 1em;
-    height: 1em;
-    text-align: center;
-    line-height: 1em;
-    color: #fff;
     visibility: visible;
+}
+
+/* Dot-matrix loading indicator: a 4x4 grid of dots pulsing in a
+   diagonal wave (top-left dot leads, bottom-right trails). */
+.noVNC_dotmatrix {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 0.5em;
+    width: 4em;
+    height: 4em;
+}
+
+.noVNC_dotmatrix span {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #fff;
+    opacity: 0.15;
+    animation: noVNC_dotmatrix_pulse 1.2s ease-in-out infinite;
+}
+
+/* Stagger each dot's animation by its diagonal (row + column) so the
+   pulse sweeps across the grid instead of blinking in unison. */
+.noVNC_dotmatrix span:nth-child(1)  { animation-delay: 0.0s; }
+.noVNC_dotmatrix span:nth-child(2)  { animation-delay: 0.1s; }
+.noVNC_dotmatrix span:nth-child(3)  { animation-delay: 0.2s; }
+.noVNC_dotmatrix span:nth-child(4)  { animation-delay: 0.3s; }
+.noVNC_dotmatrix span:nth-child(5)  { animation-delay: 0.1s; }
+.noVNC_dotmatrix span:nth-child(6)  { animation-delay: 0.2s; }
+.noVNC_dotmatrix span:nth-child(7)  { animation-delay: 0.3s; }
+.noVNC_dotmatrix span:nth-child(8)  { animation-delay: 0.4s; }
+.noVNC_dotmatrix span:nth-child(9)  { animation-delay: 0.2s; }
+.noVNC_dotmatrix span:nth-child(10) { animation-delay: 0.3s; }
+.noVNC_dotmatrix span:nth-child(11) { animation-delay: 0.4s; }
+.noVNC_dotmatrix span:nth-child(12) { animation-delay: 0.5s; }
+.noVNC_dotmatrix span:nth-child(13) { animation-delay: 0.3s; }
+.noVNC_dotmatrix span:nth-child(14) { animation-delay: 0.4s; }
+.noVNC_dotmatrix span:nth-child(15) { animation-delay: 0.5s; }
+.noVNC_dotmatrix span:nth-child(16) { animation-delay: 0.6s; }
+
+@keyframes noVNC_dotmatrix_pulse {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .noVNC_dotmatrix span {
+        animation: none;
+        opacity: 0.6;
+    }
 }
 
 /* ----------------------------------------
@@ -831,7 +875,10 @@ html {
 /* Make the spinner more prominent in the transition screen */
 #noVNC_transition .noVNC_spinner {
     margin: 20px;
-    font-size: 1.5em;
+}
+#noVNC_transition .noVNC_dotmatrix {
+    width: 6em;
+    height: 6em;
 }
 
 :root.noVNC_loading #noVNC_transition,

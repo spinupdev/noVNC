@@ -335,6 +335,14 @@ const UI = {
             .addEventListener('click', UI.rejectServer);
         document.getElementById("noVNC_credentials_button")
             .addEventListener('click', UI.setCredentials);
+
+        // 'pagehide' fires reliably on tab close/navigation (unlike
+        // 'beforeunload', it isn't skipped by bfcache eligibility checks).
+        // Without an explicit disconnect here, the browser just aborts the
+        // raw socket, and the server (websockify's 30s heartbeat, wayvnc's
+        // single-client limit) can take a while to notice the client is
+        // gone — during which a freshly opened tab fails to connect.
+        window.addEventListener('pagehide', UI.handlePageHide);
     },
 
     addClipboardHandlers() {
@@ -412,9 +420,11 @@ const UI = {
         const transitionElem = document.getElementById("noVNC_transition_text");
         switch (state) {
             case 'init':
+                transitionElem.textContent = _("Connecting to desktop...");
                 UI.startSpinner();
                 break;
             case 'connecting':
+                transitionElem.textContent = _("Connecting to desktop...");
                 UI.startSpinner();
                 document.documentElement.classList.add("noVNC_connecting");
                 break;
@@ -1236,6 +1246,19 @@ const UI = {
         e.returnValue = _("Are you sure you want to disconnect the session?");
     },
 
+    handlePageHide() {
+        // Actively close the RFB/WebSocket connection so the server sees a
+        // clean disconnect right away, instead of only finding out once the
+        // abandoned socket times out. Skip UI.disconnect() (it drives
+        // visual-state/reconnect logic that has nowhere to go on an
+        // unloading page) and disable reconnect so a lingering timer
+        // doesn't try to reconnect a page that's gone.
+        UI.inhibitReconnect = true;
+        if (UI.rfb !== undefined) {
+            UI.rfb.disconnect();
+        }
+    },
+
     updateBeforeUnload() {
         // Remove first to avoid adding duplicates
         window.removeEventListener("beforeunload", UI.handleBeforeUnload);
@@ -1867,12 +1890,11 @@ const UI = {
     },
 
     initSpinner() {
-        // ASCII spinner characters - using more visible characters
-        UI.spinnerChars = ['◰', '◳', '◲', '◱'];
-        UI.spinnerIndex = 0;
+        // The dot-matrix loading indicator (see .noVNC_dotmatrix in
+        // base.css) animates itself via CSS; this just tracks the
+        // element so start/stopSpinner can show/hide it.
         UI.spinnerElement = document.querySelector('.noVNC_spinner');
 
-        // Make sure the spinner element exists and is visible
         if (UI.spinnerElement) {
             UI.spinnerElement.style.visibility = 'visible';
             UI.spinnerElement.style.display = 'block';
@@ -1880,34 +1902,15 @@ const UI = {
     },
 
     startSpinner() {
-        if (UI.spinnerTimeoutId) return; // Already running
-
-        UI.spinnerIndex = 0;
-        UI.updateSpinner();
-
-        UI.spinnerTimeoutId = setInterval(() => {
-            UI.updateSpinner();
-        }, 100); // Update every 100ms
+        if (UI.spinnerElement) {
+            UI.spinnerElement.style.display = 'block';
+        }
     },
 
     stopSpinner() {
-        if (UI.spinnerTimeoutId) {
-            clearInterval(UI.spinnerTimeoutId);
-            UI.spinnerTimeoutId = null;
-        }
-
         if (UI.spinnerElement) {
-            UI.spinnerElement.textContent = '';
+            UI.spinnerElement.style.display = 'none';
         }
-    },
-
-    updateSpinner() {
-        if (!UI.spinnerElement) {
-            return;
-        }
-
-        UI.spinnerElement.textContent = UI.spinnerChars[UI.spinnerIndex];
-        UI.spinnerIndex = (UI.spinnerIndex + 1) % UI.spinnerChars.length;
     },
 
 /* ------^-------
